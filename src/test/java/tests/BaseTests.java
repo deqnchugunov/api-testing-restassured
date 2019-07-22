@@ -1,18 +1,22 @@
 package tests;
 
 import fixtures.BaseFixture;
+import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import models.Todo;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import java.io.IOException;
+import java.util.List;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
 
 public class BaseTests extends BaseFixture {
 
+    // Rest Assured Usage https://github.com/rest-assured/rest-assured/wiki/usage
+
     @Test
-    public void getAllTodoItems() {
+    public void getAllTodoItemsTest() {
         /*
            {
             "id": 2,
@@ -37,7 +41,7 @@ public class BaseTests extends BaseFixture {
     }
 
     @Test
-    public void GetSingleTodoItem() {
+    public void getSingleTodoItemTest() {
         /*
              {
               "id": 1,
@@ -58,7 +62,7 @@ public class BaseTests extends BaseFixture {
     }
 
     @Test
-    public void PostTodoItemAddBodyAnonymous()
+    public void postTodoItemAddBodyAnonymousTest()
     {
         String requestBody = "{\"name\": \"name-001\",\"isComplete\": \"false\",\"dateDue\" : \"2019-10-10T00:00:00Z\"}";
         Response response =
@@ -91,7 +95,7 @@ public class BaseTests extends BaseFixture {
     }
 
     @Test
-    public void PostTodoItemClassType()
+    public void postTodoItemClassTypeTest()
     {
         Todo todo = new Todo() {
             {
@@ -131,7 +135,7 @@ public class BaseTests extends BaseFixture {
     }
 
     @Test
-    public void PostTodoItemGenericDeserialization()
+    public void postTodoItemGenericDeserializationTest()
     {
         Todo todo = new Todo() {
             {
@@ -159,5 +163,52 @@ public class BaseTests extends BaseFixture {
         Assert.assertEquals(response.name, todo.name);
         Assert.assertEquals(response.isComplete, todo.isComplete);
         Assert.assertEquals(response.dateDue, todo.dateDue);
+    }
+
+    @Test
+    public void requestHeaderTest() {
+        given()
+            .log().all()
+            .header("canAccess", "true")
+            .cookie("testCookie", "testCookieValue")
+        .when()
+            .get(todos)
+        .then()
+            .statusCode(200);
+    }
+
+    @Test
+    public void allUsersWithAptInTheAddressTest() {
+        RestAssured.reset();
+        given()
+            .log()
+            .all()
+            .baseUri("https://jsonplaceholder.typicode.com/")
+        .when()
+            .get("/users")
+        .then()
+            .body("address.findAll{ it.suite.contains('Apt.')}.city", hasItems("South Christy", "South Elvis", "Gwenborough")); // assertion
+    }
+
+    @Test
+    public void allCitiesFromTheResponseTest() {
+        RestAssured.reset();
+        Response response =
+            given()
+                .log()
+                .all()
+                .contentType("application/json")
+                .baseUri("https://jsonplaceholder.typicode.com/")
+            .when()
+                .get("/users")
+            .then()
+                .extract()
+                .response();
+
+        List<String> cities = response.jsonPath().getList("address.findAll{it.suite.contains('Apt.')}.city");
+
+        for (String city : cities) {
+            System.out.println(city);
+        }
     }
 }
